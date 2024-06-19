@@ -1,0 +1,43 @@
+---
+
+# bootstrap ist quasi dafür da um neue SErver aufzusetzen um die initiale konfiguration auf dem SErver zu bekommen
+- hosts: all
+  become: true
+  pre_tasks:
+
+  - name: install updates (Ubuntu)
+    tags: always
+    apt:
+      upgrade: dist
+      update_cache: yes
+    #changed_when false sorgt dafür, dass wenn ich das ansible paybook laufen lasse auch wenn sich hier was ändert kein changed angezeigt wird, da sich höchstwahrscheinlich immer was im cache ändern wird
+    changed_when: false
+    when: ansible_distribution == "Ubuntu"
+
+- hosts: all
+  become: true
+  tasks:
+
+  - name: create simone user
+    tags: always
+    user:
+      name: simone
+      # ob man den user hier hinzufügt oder nicht zu root ist hier eigentlich egal und nur ein test um sachen auszuprobieren
+      groups: root
+
+  #adding ssh ansible authorized key for user simone
+  - name: add ssh key for simone
+    tags: always
+    authorized_key:
+      user: simone
+      key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEcjIiM935SI6i5TFMkv/qKWJVHcQRApAtOCZTxZf0X4 ansible"
+
+  #here simone can then use sudo without password
+  - name: add sudoers file for simone
+    tags: always
+    copy:
+      src: sudoer_simone
+      dest: /etc/sudoers.d/simone
+      owner: root
+      group: root
+      mode: 0440
